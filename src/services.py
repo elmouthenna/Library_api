@@ -38,6 +38,23 @@ def get_all_books():
 
     return books
 
+#lire un livre par son id
+# ----------------------------------------------
+def get_book_by_id(book_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT id, title, author, year FROM books WHERE id = ?",
+        (book_id,)
+    )
+    row = cur.fetchone()   # None si aucune ligne ne correspond
+    conn.close()
+
+    if row is None:
+        return None
+
+    return Book(row[0], row[1], row[2], row[3]).to_dict()
 
 # ----------------------------------------------
 # UPDATE : modifier un livre
@@ -51,8 +68,12 @@ def update_book(book_id, title, author, year=None):
         (title, author, year, book_id)
     )
 
-    conn.commit()
+   conn.commit()
+    touched = cur.rowcount   # nombre de lignes réellement modifiées
     conn.close()
+
+    if touched == 0:
+        return None          # aucun livre avec cet id
 
     return {"message": f"Book {book_id} updated."}
 
@@ -66,7 +87,11 @@ def delete_book(book_id):
 
     cur.execute("DELETE FROM books WHERE id = ?", (book_id,))
 
-    conn.commit()
+     conn.commit()
+    touched = cur.rowcount   # 0 si aucun livre n'avait cet id
     conn.close()
+
+    if touched == 0:
+        return None
 
     return {"message": f"Book {book_id} deleted."}
